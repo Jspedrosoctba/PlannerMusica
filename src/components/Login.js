@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { auth } from '../firebaseConfig';
+import React, { useState, useEffect } from 'react';
+import { auth, db } from '../firebaseConfig';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { useNavigate, Link } from 'react-router-dom';
 import styled from 'styled-components';
@@ -7,6 +7,8 @@ import PropTypes from 'prop-types';
 import ReactLoading from 'react-loading';
 import { toast } from 'react-toastify';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 const Container = styled.div`
   display: flex;
@@ -130,8 +132,11 @@ const SignupLink = styled.p`
   }
 `;
 
-const LoadingSpinner = styled(ReactLoading)`
-  margin: 0 auto;
+const LoadingContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
 `;
 
 const Login = () => {
@@ -140,7 +145,14 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const [user, loading] = useAuthState(auth);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -161,21 +173,38 @@ const Login = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
-
     setIsLoading(true);
+
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      // Salvar informação do usuário no localStorage
-      localStorage.setItem('user', JSON.stringify(userCredential.user));
+      const user = userCredential.user;
+
+      // Criar ou atualizar documento do usuário
+      const userDocRef = doc(db, 'users', user.uid);
+      const userDocSnap = await getDoc(userDocRef);
+      
+      if (userDocSnap.exists()) {
+        // Se o documento existe, apenas atualiza o lastLogin
+        await setDoc(userDocRef, {
+          lastLogin: new Date().toISOString()
+        }, { merge: true });
+      } else {
+        // Se não existe, cria com dados básicos
+        await setDoc(userDocRef, {
+          email: user.email,
+          name: user.displayName || 'Usuário',
+          photoURL: user.photoURL,
+          createdAt: new Date().toISOString(),
+          lastLogin: new Date().toISOString()
+        });
+      }
+
       toast.success('Login realizado com sucesso!');
-      navigate('/musiclist');
+      navigate('/dashboard');
     } catch (error) {
+      console.error('Erro ao fazer login:', error);
       let errorMessage = 'Erro ao fazer login';
 
       switch (error.code) {
@@ -193,17 +222,26 @@ const Login = () => {
       }
 
       toast.error(errorMessage);
-      console.error("Erro ao fazer login:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
+  if (loading) {
+    return (
+      <Container>
+        <LoadingContainer>
+          <ReactLoading type="bubbles" color="#fff" height={64} width={64} />
+        </LoadingContainer>
+      </Container>
+    );
+  }
+
   return (
     <Container>
       <LoginCard>
         <Title>Login</Title>
-        <StyledForm onSubmit={handleLogin}>
+        <StyledForm onSubmit={handleSubmit}>
           <InputGroup>
             <Input
               type="email"
@@ -241,7 +279,7 @@ const Login = () => {
           <Button type="submit" disabled={isLoading}>
             {isLoading ? (
               <>
-                <LoadingSpinner type="spin" color="#fff" height={20} width={20} />
+                <ReactLoading type="spin" color="#fff" height={20} width={20} />
                 Entrando...
               </>
             ) : (

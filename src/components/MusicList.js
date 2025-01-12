@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
-import { db } from '../firebaseConfig';
-import { collection, query, orderBy, getDocs } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
-import { FiPlus, FiMusic, FiBookOpen } from 'react-icons/fi';
+import { collection, getDocs, query, where, doc, deleteDoc } from 'firebase/firestore';
+import { db, auth } from '../firebaseConfig';
+import styled from 'styled-components';
+import { FiPlus, FiSearch, FiX, FiEdit2, FiTrash2, FiMoreVertical } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import ReactLoading from 'react-loading';
 
@@ -14,271 +14,350 @@ const Container = styled.div`
 `;
 
 const Content = styled.div`
-  max-width: 1200px;
+  max-width: 800px;
   margin: 0 auto;
+  position: relative;
 `;
 
-const Header = styled.div`
+const ListHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
+  position: relative;
+`;
+
+const TotalMusic = styled.span`
   color: white;
+  font-size: 1.1rem;
 `;
 
-const Title = styled.h1`
-  font-size: 2rem;
-  margin: 0;
-`;
-
-const TabContainer = styled.div`
-  display: flex;
-  gap: 1rem;
+const SearchContainer = styled.div`
+  position: relative;
   margin-bottom: 2rem;
-`;
-
-const Tab = styled.button`
-  padding: 10px 20px;
-  background: ${props => (props.active ? '#1db954' : 'rgba(255, 255, 255, 0.1)')};
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: ${props => (props.active ? 'bold' : 'normal')};
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-
-  &:hover {
-    background: ${props => (props.active ? '#1ed760' : 'rgba(255, 255, 255, 0.2)')};
-  }
 `;
 
 const SearchInput = styled.input`
   width: 100%;
   padding: 12px;
+  padding-right: 40px;
+  background: rgba(255, 255, 255, 0.1);
   border: 2px solid rgba(255, 255, 255, 0.1);
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.1);
   color: white;
   font-size: 1rem;
-  margin-bottom: 2rem;
-  transition: all 0.3s ease;
-
-  &::placeholder {
-    color: rgba(255, 255, 255, 0.6);
-  }
 
   &:focus {
     outline: none;
     border-color: #1db954;
-    background: rgba(255, 255, 255, 0.15);
+  }
+
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.6);
   }
 `;
 
-const Grid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
-`;
-
-const Card = styled.div`
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  padding: 1.5rem;
-  color: white;
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
-  cursor: pointer;
-
-  &:hover {
-    transform: translateY(-5px);
-    background: rgba(255, 255, 255, 0.15);
-  }
-`;
-
-const CardTitle = styled.h3`
-  margin: 0 0 0.5rem 0;
-  font-size: 1.2rem;
-`;
-
-const CardArtist = styled.p`
-  margin: 0 0 1rem 0;
-  color: rgba(255, 255, 255, 0.8);
-`;
-
-const CardInfo = styled.div`
-  display: flex;
-  gap: 1rem;
-  font-size: 0.9rem;
+const SearchIcon = styled(FiSearch)`
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
   color: rgba(255, 255, 255, 0.6);
 `;
 
+const ClearButton = styled(FiX)`
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  
+  &:hover {
+    color: white;
+  }
+`;
+
 const AddButton = styled.button`
-  position: fixed;
-  bottom: 2rem;
-  right: 2rem;
-  width: 60px;
-  height: 60px;
-  border-radius: 30px;
-  background: #1db954;
-  color: white;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.1);
   border: none;
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  svg {
+    font-size: 1.1rem;
+  }
+`;
+
+const MusicListContainer = styled.div`
+  position: relative;
+`;
+
+const MusicItem = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+  position: relative;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+`;
+
+const MusicInfo = styled.div`
+  flex: 1;
+  margin-right: 1rem;
+`;
+
+const MusicTitle = styled.h3`
+  margin: 0;
+  margin-bottom: 0.5rem;
+  color: white;
+  font-size: 1.1rem;
+`;
+
+const MusicArtist = styled.p`
+  margin: 0;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+`;
+
+const MusicActions = styled.div`
+  position: relative;
+  z-index: 1000;
+`;
+
+const OptionsButton = styled.button`
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.8);
+  padding: 8px;
+  cursor: pointer;
+  position: relative;
+  z-index: 1000;
+
+  &:hover {
+    color: white;
+  }
+
+  &:focus {
+    outline: none;
+  }
+`;
+
+const OptionsMenu = styled.div`
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: #282828;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  min-width: 150px;
+  z-index: 1001;
+`;
+
+const MenuItem = styled.button`
+  width: 100%;
+  padding: 8px 16px;
+  background: none;
+  border: none;
+  color: white;
+  text-align: left;
   cursor: pointer;
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transition: all 0.3s ease;
+  gap: 8px;
 
   &:hover {
-    transform: scale(1.1);
-    background: #1ed760;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  svg {
+    font-size: 1.1rem;
   }
 `;
 
-const EmptyState = styled.div`
+const NoResults = styled.div`
   text-align: center;
-  color: white;
-  padding: 3rem;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  margin-top: 2rem;
-
-  h3 {
-    margin: 1rem 0;
-  }
-
-  p {
-    color: rgba(255, 255, 255, 0.8);
-    margin-bottom: 1.5rem;
-  }
-`;
-
-const LoadingContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 200px;
+  padding: 2rem;
+  color: rgba(255, 255, 255, 0.8);
 `;
 
 const MusicList = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('lyrics'); // 'lyrics' ou 'chords'
+  const [allMusic, setAllMusic] = useState([]);
+  const [filteredMusic, setFilteredMusic] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [items, setItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const [openMenuId, setOpenMenuId] = useState(null);
 
   useEffect(() => {
-    fetchItems();
-  }, [activeTab]);
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        fetchItems(currentUser.uid);
+      }
+    });
 
-  const fetchItems = async () => {
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const filtered = allMusic.filter(item => {
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        item.title.toLowerCase().includes(searchLower) ||
+        item.artist.toLowerCase().includes(searchLower)
+      );
+    });
+    setFilteredMusic(filtered);
+  }, [searchTerm, allMusic]);
+
+  const fetchItems = async (userId) => {
     setIsLoading(true);
     try {
-      const q = query(
-        collection(db, activeTab),
-        orderBy('createdAt', 'desc')
-      );
+      const musicsRef = collection(db, 'musics');
+      const q = query(musicsRef, where('userId', '==', userId));
       const querySnapshot = await getDocs(q);
-      const fetchedItems = querySnapshot.docs.map(doc => ({
+      
+      const items = querySnapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data(),
+        ...doc.data()
       }));
-      setItems(fetchedItems);
+      
+      setAllMusic(items);
+      setFilteredMusic(items);
     } catch (error) {
-      console.error('Erro ao buscar itens:', error);
-      toast.error('Erro ao carregar a lista de músicas');
+      console.error('Erro ao buscar músicas:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const filteredItems = items.filter(item => {
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      item.title.toLowerCase().includes(searchLower) ||
-      item.artist.toLowerCase().includes(searchLower)
-    );
-  });
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value);
+  };
 
-  const handleAddClick = () => {
-    navigate('/music-form');
+  const clearSearch = () => {
+    setSearchTerm('');
+  };
+
+  const handleAddNew = () => {
+    navigate('/music/new');
   };
 
   const handleItemClick = (item) => {
     navigate(`/music/${item.id}`);
   };
 
+  const toggleMenu = (e, id) => {
+    e.stopPropagation();
+    setOpenMenuId(openMenuId === id ? null : id);
+  };
+
+  const handleEdit = (e, item) => {
+    e.stopPropagation();
+    navigate(`/edit/${item.id}`);
+    setOpenMenuId(null);
+  };
+
+  const handleDelete = async (e, item) => {
+    e.stopPropagation();
+    if (window.confirm('Tem certeza que deseja excluir esta música?')) {
+      try {
+        // await deleteDoc(doc(db, 'music', item.id));
+        setAllMusic(allMusic.filter(music => music.id !== item.id));
+        setFilteredMusic(filteredMusic.filter(music => music.id !== item.id));
+        // toast.success('Música excluída com sucesso!');
+      } catch (error) {
+        // toast.error('Erro ao excluir música');
+        console.error('Error deleting document: ', error);
+      }
+    }
+    setOpenMenuId(null);
+  };
+
+  if (isLoading) {
+    return (
+      <Container>
+        <Content style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '300px' }}>
+          <ReactLoading type="bubbles" color="#fff" height={64} width={64} />
+        </Content>
+      </Container>
+    );
+  }
+
   return (
     <Container>
       <Content>
-        <Header>
-          <Title>Minhas Músicas</Title>
-        </Header>
+        <ListHeader>
+          <TotalMusic>Total de músicas: {filteredMusic.length}</TotalMusic>
+          <AddButton onClick={handleAddNew}>
+            <FiPlus /> Nova Música
+          </AddButton>
+        </ListHeader>
 
-        <TabContainer>
-          <Tab 
-            active={activeTab === 'lyrics'} 
-            onClick={() => setActiveTab('lyrics')}
-          >
-            <FiBookOpen /> Letras
-          </Tab>
-          <Tab 
-            active={activeTab === 'chords'} 
-            onClick={() => setActiveTab('chords')}
-          >
-            <FiMusic /> Cifras
-          </Tab>
-        </TabContainer>
+        <SearchContainer>
+          <SearchInput
+            type="text"
+            placeholder="Buscar música..."
+            value={searchTerm}
+            onChange={handleSearch}
+          />
+          {searchTerm && (
+            <ClearButton onClick={clearSearch}>
+              <FiX />
+            </ClearButton>
+          )}
+        </SearchContainer>
 
-        <SearchInput
-          type="text"
-          placeholder="Pesquisar por título ou artista..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-
-        {isLoading ? (
-          <LoadingContainer>
-            <ReactLoading type="bubbles" color="#fff" height={64} width={64} />
-          </LoadingContainer>
-        ) : filteredItems.length > 0 ? (
-          <Grid>
-            {filteredItems.map((item) => (
-              <Card key={item.id} onClick={() => handleItemClick(item)}>
-                <CardTitle>{item.title}</CardTitle>
-                <CardArtist>{item.artist}</CardArtist>
-                <CardInfo>
-                  {activeTab === 'chords' && (
-                    <>
-                      <span>Tom: {item.key}</span>
-                      <span>Ritmo: {item.rhythm}</span>
-                    </>
+        <MusicListContainer>
+          {filteredMusic.length > 0 ? (
+            filteredMusic.map(item => (
+              <MusicItem key={item.id} onClick={() => handleItemClick(item)}>
+                <MusicInfo>
+                  <MusicTitle>{item.title}</MusicTitle>
+                  <MusicArtist>{item.artist}</MusicArtist>
+                </MusicInfo>
+                <MusicActions>
+                  <OptionsButton onClick={(e) => toggleMenu(e, item.id)}>
+                    <FiMoreVertical />
+                  </OptionsButton>
+                  {openMenuId === item.id && (
+                    <OptionsMenu>
+                      <MenuItem onClick={(e) => handleEdit(e, item)}>
+                        <FiEdit2 /> Editar
+                      </MenuItem>
+                      <MenuItem onClick={(e) => handleDelete(e, item)}>
+                        <FiTrash2 /> Excluir
+                      </MenuItem>
+                    </OptionsMenu>
                   )}
-                  <span>
-                    {new Date(item.createdAt.toDate()).toLocaleDateString()}
-                  </span>
-                </CardInfo>
-              </Card>
-            ))}
-          </Grid>
-        ) : (
-          <EmptyState>
-            <FiMusic size={48} />
-            <h3>Nenhuma {activeTab === 'lyrics' ? 'letra' : 'cifra'} encontrada</h3>
-            <p>
-              Comece adicionando suas {activeTab === 'lyrics' ? 'letras' : 'cifras'} 
-              favoritas!
-            </p>
-          </EmptyState>
-        )}
-
-        <AddButton onClick={handleAddClick}>
-          <FiPlus />
-        </AddButton>
+                </MusicActions>
+              </MusicItem>
+            ))
+          ) : (
+            <NoResults>
+              {searchTerm ? 'Nenhuma música encontrada' : 'Nenhuma música cadastrada'}
+            </NoResults>
+          )}
+        </MusicListContainer>
       </Content>
     </Container>
   );
