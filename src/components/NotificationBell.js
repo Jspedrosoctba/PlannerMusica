@@ -57,7 +57,7 @@ const PopoverContainer = styled.div`
   max-height: 400px;
   overflow-y: auto;
   z-index: 1000;
-  display: ${props => props.show ? 'block' : 'none'};
+  display: ${props => props.$isVisible ? 'block' : 'none'};
 `;
 
 const NotificationList = styled.div`
@@ -120,14 +120,14 @@ const EmptyMessage = styled.div`
 `;
 
 export default function NotificationBell() {
-  const [showPopover, setShowPopover] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const { notifications, unreadCount, markAllAsRead, clearNotifications } = useNotifications();
   const containerRef = useRef(null);
 
   useEffect(() => {
     function handleClickOutside(event) {
       if (containerRef.current && !containerRef.current.contains(event.target)) {
-        setShowPopover(false);
+        setIsOpen(false);
       }
     }
 
@@ -136,8 +136,8 @@ export default function NotificationBell() {
   }, []);
 
   const handleBellClick = () => {
-    setShowPopover(!showPopover);
-    if (!showPopover && unreadCount > 0) {
+    setIsOpen(!isOpen);
+    if (!isOpen && unreadCount > 0) {
       markAllAsRead();
     }
   };
@@ -158,12 +158,12 @@ export default function NotificationBell() {
         {unreadCount > 0 && <Badge>{unreadCount}</Badge>}
       </IconButton>
 
-      <PopoverContainer show={showPopover}>
+      <PopoverContainer $isVisible={isOpen}>
         <NotificationList>
           {notifications.length > 0 ? (
             <>
-              {notifications.map((notification) => (
-                <NotificationItem key={notification.id} read={notification.read}>
+              {notifications.map((notification, index) => (
+                <NotificationItem key={index} read={notification.read}>
                   <NotificationMessage>{notification.message}</NotificationMessage>
                   <TimeStamp>{formatTimestamp(notification.timestamp)}</TimeStamp>
                 </NotificationItem>

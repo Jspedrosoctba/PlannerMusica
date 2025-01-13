@@ -100,15 +100,6 @@ function App() {
           />
 
           <Route 
-            path="/music/new" 
-            element={
-              <PrivateRoute>
-                <MusicForm />
-              </PrivateRoute>
-            } 
-          />
-
-          <Route 
             path="/music/:id" 
             element={
               <PrivateRoute>
@@ -127,10 +118,37 @@ function App() {
           />
 
           <Route 
+            path="/edit-profile/:id" 
+            element={
+              <PrivateRoute>
+                <EditProfile />
+              </PrivateRoute>
+            } 
+          />
+
+          <Route 
             path="/edit-profile" 
             element={
               <PrivateRoute>
                 <EditProfile />
+              </PrivateRoute>
+            } 
+          />
+
+          <Route 
+            path="/music/new" 
+            element={
+              <PrivateRoute>
+                <MusicForm />
+              </PrivateRoute>
+            } 
+          />
+
+          <Route 
+            path="/music/create" 
+            element={
+              <PrivateRoute>
+                <MusicForm />
               </PrivateRoute>
             } 
           />

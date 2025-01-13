@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import styled from 'styled-components';
@@ -23,192 +23,269 @@ import { useNotifications } from '../contexts/NotificationContext';
 
 const Container = styled.div`
   min-height: 100vh;
-  padding: 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-`;
-
-const Content = styled.div`
-  max-width: 800px;
-  margin: 0 auto;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border-radius: 10px;
-  padding: 2rem;
-  color: white;
+  background: linear-gradient(135deg, #6e8efb, #a777e3);
+  position: relative;
+  overflow-x: hidden;
 `;
 
 const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  padding: 20px 40px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 `;
 
-const Title = styled.h1`
-  margin: 0;
+const Content = styled.div`
+  padding: 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+`;
+
+const PageTitle = styled.h1`
+  color: white;
   font-size: 2rem;
+  margin: 0 0 32px 0;
+  font-weight: 500;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 `;
 
-const ButtonGroup = styled.div`
-  display: flex;
-  gap: 1rem;
-`;
-
-const Button = styled.button`
-  background: ${props => props.danger ? '#dc3545' : props.primary ? '#1db954' : 'rgba(255, 255, 255, 0.1)'};
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    background: ${props => props.danger ? '#c82333' : props.primary ? '#1ed760' : 'rgba(255, 255, 255, 0.2)'};
-  }
-
-  &:disabled {
-    background: #ccc;
-    cursor: not-allowed;
-    transform: none;
-  }
-`;
-
-const Input = styled.input`
-  width: 100%;
-  padding: 12px;
+const FormContainer = styled.div`
   background: rgba(255, 255, 255, 0.1);
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
-  color: white;
-  font-size: 1rem;
-
-  &:focus {
-    outline: none;
-    border-color: #1db954;
-  }
-
-  &::placeholder {
-    color: rgba(255, 255, 255, 0.6);
-  }
-`;
-
-const Select = styled.select`
-  width: 100%;
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
-  color: white;
-  font-size: 1rem;
-
-  &:focus {
-    outline: none;
-    border-color: #1db954;
-  }
-
-  option {
-    background: #333;
-    color: white;
-  }
-`;
-
-const KeySelect = styled.select`
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
-  color: white;
-  padding: 8px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 1rem;
-
-  &:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(29, 185, 84, 0.5);
-  }
-
-  option {
-    background: #333;
-    color: white;
-  }
-`;
-
-const TextArea = styled.pre`
-  width: 100%;
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
-  color: white;
-  font-size: 1rem;
-  font-family: ${props => props.isCifra ? 'monospace' : 'inherit'};
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  margin: 0;
-  column-count: ${props => props.columns ? 2 : 1};
-  column-gap: 2rem;
-  column-rule: 1px solid rgba(255, 255, 255, 0.1);
-
-  @media (max-width: 768px) {
-    column-count: 1;
-  }
-
-  &:focus {
-    outline: none;
-    border-color: #1db954;
-  }
-`;
-
-const EditTextArea = styled.textarea`
-  width: 100%;
-  min-height: 300px;
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
-  color: white;
-  font-size: 1rem;
-  font-family: ${props => props.isCifra ? 'monospace' : 'inherit'};
-  resize: vertical;
-  white-space: pre-wrap;
-
-  &:focus {
-    outline: none;
-    border-color: #1db954;
-  }
-
-  &::placeholder {
-    color: rgba(255, 255, 255, 0.6);
-  }
-`;
-
-const BackButton = styled(Button)`
-  margin-bottom: 1rem;
-`;
-
-const Form = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 `;
 
 const FormGroup = styled.div`
-  display: flex;
-  gap: 1rem;
-`;
-
-const InputGroup = styled.div`
-  flex: 1;
+  margin-bottom: 24px;
 `;
 
 const Label = styled.label`
   display: block;
-  margin-bottom: 0.5rem;
+  color: white;
+  margin-bottom: 8px;
+  font-weight: 500;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+`;
+
+const Input = styled.input`
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 1rem;
+  backdrop-filter: blur(10px);
+
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.4);
+  }
+`;
+
+const TextDisplay = styled.pre`
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 1rem;
+  font-family: monospace;
+  white-space: pre-wrap;
+  margin: 0;
+  column-width: ${props => props.columns ? 'calc(50% - 1rem)' : 'auto'};
+  column-count: ${props => props.columns ? 2 : 1};
+  column-gap: 2rem;
+  column-fill: balance;
+  
+  /* Evita quebra de linha no meio das palavras */
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  
+  /* Garante que cada linha fique em uma única coluna */
+  & > * {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Ajusta para mobile */
+  @media (max-width: 768px) {
+    column-count: 1;
+    column-width: auto;
+  }
+`;
+
+const TextArea = styled.textarea`
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 1rem;
+  font-family: monospace;
+  min-height: 200px;
+  resize: none;
+  backdrop-filter: blur(10px);
+  white-space: pre;
+  tab-size: 4;
+
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.4);
+  }
+`;
+
+const ButtonGroup = styled.div`
+  display: flex;
+  gap: 16px;
+  margin-top: 32px;
+`;
+
+const Button = styled.button`
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: none;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  ${props => props.$primary && `
+    background: #1db954;
+    color: white;
+
+    &:hover {
+      background: #1ed760;
+    }
+  `}
+
+  ${props => props.$secondary && `
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+  `}
+`;
+
+const ViewButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: ${props => props.active ? 'rgba(29, 185, 84, 0.8)' : 'rgba(255, 255, 255, 0.1)'};
+  color: white;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: ${props => props.active ? 'rgba(29, 185, 84, 0.9)' : 'rgba(255, 255, 255, 0.2)'};
+  }
+
+  svg {
+    font-size: 1.1rem;
+  }
+`;
+
+const MusicContent = styled.div`
+  display: ${props => props.visible ? 'block' : 'none'};
+  margin-top: 1rem;
+`;
+
+const ChordDetails = styled.div`
+  margin: 1rem 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1rem;
+  border-radius: 6px;
+
+  p {
+    margin: 0.5rem 0;
+  }
+`;
+
+const ChordControls = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1rem;
+  border-radius: 6px;
+`;
+
+const CurrentKey = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const TransposeButton = styled(Button)`
+  padding: 0.5rem;
+  min-width: 40px;
+  justify-content: center;
+`;
+
+const ViewControls = styled.div`
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+`;
+
+const ControlGroup = styled.div`
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+`;
+
+const MusicInfo = styled.div`
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  flex-wrap: wrap;
+`;
+
+const InfoItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   color: rgba(255, 255, 255, 0.8);
+
+  span {
+    font-weight: bold;
+    color: white;
+  }
 `;
 
 const Modal = styled.div`
@@ -285,103 +362,67 @@ const ToggleOption = styled.div`
   }
 `;
 
-const MusicContent = styled.div`
-  display: ${props => props.visible ? 'block' : 'none'};
-  margin-top: 1rem;
-`;
-
-const ChordDetails = styled.div`
-  margin: 1rem 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-  background: rgba(255, 255, 255, 0.05);
-  padding: 1rem;
-  border-radius: 6px;
-
-  p {
-    margin: 0.5rem 0;
-  }
-`;
-
-const ChordControls = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  background: rgba(255, 255, 255, 0.05);
-  padding: 1rem;
-  border-radius: 6px;
-`;
-
-const CurrentKey = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-`;
-
-const TransposeButton = styled(Button)`
-  padding: 0.5rem;
-  min-width: 40px;
-  justify-content: center;
-`;
-
-const ViewControls = styled.div`
+const Tabs = styled.div`
   display: flex;
   gap: 1rem;
   margin-bottom: 1rem;
   align-items: center;
-  flex-wrap: wrap;
 `;
 
-const ControlGroup = styled.div`
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-`;
-
-const ViewButton = styled.button`
+const Tab = styled.button`
   background: ${props => props.active ? 'rgba(29, 185, 84, 0.8)' : 'rgba(255, 255, 255, 0.1)'};
   color: white;
   border: none;
-  padding: 8px;
+  padding: 8px 16px;
   border-radius: 4px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
   font-size: 0.9rem;
   transition: all 0.2s ease;
 
   &:hover {
     background: ${props => props.active ? 'rgba(29, 185, 84, 0.9)' : 'rgba(255, 255, 255, 0.2)'};
   }
-
-  svg {
-    font-size: 1.1rem;
-  }
 `;
 
-const MusicInfo = styled.div`
+const ChordInfo = styled.div`
   display: flex;
   gap: 2rem;
   margin-bottom: 1rem;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 6px;
-  flex-wrap: wrap;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  align-items: center;
 `;
 
-const InfoItem = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: rgba(255, 255, 255, 0.8);
+const KeySelect = styled.select`
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
 
-  span {
-    font-weight: bold;
-    color: white;
+  &:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.4);
   }
+
+  option {
+    background: #2c2c2c;
+  }
+`;
+
+const LogoLink = styled(Link)`
+  display: block;
+  text-decoration: none;
+  margin-right: 2rem;
+`;
+
+const LogoImage = styled.img`
+  width: 320px;
+  height: 120px;
+  object-fit: contain;
 `;
 
 const MusicDetails = () => {
@@ -396,7 +437,8 @@ const MusicDetails = () => {
   const [currentKey, setCurrentKey] = useState('');
   const [transposedChords, setTransposedChords] = useState('');
   const [availableKeys, setAvailableKeys] = useState([]);
-  const [showChords, setShowChords] = useState(false);
+  const [showChords, setShowChords] = useState(true);
+  const [showLyrics, setShowLyrics] = useState(true);
   const [showColumns, setShowColumns] = useState(false);
 
   const timeSignatureOptions = [
@@ -622,6 +664,7 @@ const MusicDetails = () => {
 
   const toggleView = () => {
     setShowChords(!showChords);
+    setShowLyrics(!showLyrics);
   };
 
   const toggleColumns = () => {
@@ -644,173 +687,56 @@ const MusicDetails = () => {
 
   return (
     <Container>
+      <Header>
+        <LogoLink to="/">
+          <LogoImage src={process.env.PUBLIC_URL + '/Planner_Music.png'} alt="Planner Music" />
+        </LogoLink>
+        <PageTitle>{item?.title}</PageTitle>
+        <ButtonGroup>
+          <Button $secondary onClick={handlePrint}>
+            <FiPrinter /> Imprimir
+          </Button>
+          <Button $secondary onClick={handleShare}>
+            <FiShare2 /> Compartilhar
+          </Button>
+          <Button $secondary onClick={handleEdit}>
+            <FiEdit2 /> Editar
+          </Button>
+          <Button $secondary danger onClick={handleDelete}>
+            <FiTrash2 /> Excluir
+          </Button>
+        </ButtonGroup>
+      </Header>
+
       <Content>
-        <Header>
-          <BackButton onClick={handleBack}>
-            Voltar
-          </BackButton>
-        </Header>
+        <Tabs>
+          <Tab active={!showChords} onClick={() => setShowChords(false)}>
+            Letra
+          </Tab>
+          <Tab active={showChords} onClick={() => setShowChords(true)}>
+            Cifra
+          </Tab>
+          <ViewButton 
+            active={showColumns} 
+            onClick={() => setShowColumns(!showColumns)}
+          >
+            <FiColumns /> {showColumns ? 'Uma Coluna' : 'Duas Colunas'}
+          </ViewButton>
+        </Tabs>
 
-        {isEditing ? (
-          <>
-            <Header>
-              <Title>Editando Música</Title>
-              <ButtonGroup>
-                <Button danger onClick={handleCancel}>
-                  <FiX /> Cancelar
-                </Button>
-                <Button primary onClick={handleSave}>
-                  <FiSave /> Salvar
-                </Button>
-              </ButtonGroup>
-            </Header>
-
-            <Form>
-              <FormGroup>
-                <InputGroup>
-                  <Label required>Título</Label>
-                  <Input
-                    type="text"
-                    name="title"
-                    value={editedItem.title}
-                    onChange={handleChange}
-                    required
-                  />
-                </InputGroup>
-
-                <InputGroup>
-                  <Label required>Artista</Label>
-                  <Input
-                    type="text"
-                    name="artist"
-                    value={editedItem.artist}
-                    onChange={handleChange}
-                    required
-                  />
-                </InputGroup>
-              </FormGroup>
-
-              <FormGroup>
-                <InputGroup>
-                  <Label>Tom</Label>
-                  <Select
-                    name="key"
-                    value={editedItem.key || ''}
-                    onChange={handleChange}
-                  >
-                    <option value="">Selecione...</option>
-                    {keyOptions.map(key => (
-                      <option key={key} value={key}>{key}</option>
-                    ))}
-                  </Select>
-                </InputGroup>
-
-                <InputGroup>
-                  <Label>Ritmo</Label>
-                  <Input
-                    type="text"
-                    name="rhythm"
-                    value={editedItem.rhythm || ''}
-                    onChange={handleChange}
-                    placeholder="Ex: Samba, Rock, etc"
-                  />
-                </InputGroup>
-
-                <InputGroup>
-                  <Label>Andamento (BPM)</Label>
-                  <Input
-                    type="number"
-                    name="tempo"
-                    value={editedItem.tempo || ''}
-                    onChange={handleChange}
-                    placeholder="Ex: 120"
-                  />
-                </InputGroup>
-              </FormGroup>
-
-              <InputGroup>
-                <Label>Cifra</Label>
-                <EditTextArea
-                  name="chords"
-                  value={editedItem.chords || ''}
-                  onChange={handleChange}
-                  placeholder="Cole aqui a cifra da música..."
-                  isCifra
-                />
-              </InputGroup>
-
-              <InputGroup>
-                <Label>Letra</Label>
-                <EditTextArea
-                  name="lyrics"
-                  value={editedItem.lyrics || ''}
-                  onChange={handleChange}
-                  placeholder="Cole aqui a letra da música..."
-                />
-              </InputGroup>
-
-              <InputGroup>
-                <Label>Observações</Label>
-                <EditTextArea
-                  name="observations"
-                  value={editedItem.observations || ''}
-                  onChange={handleChange}
-                  placeholder="Adicione observações sobre a música..."
-                />
-              </InputGroup>
-            </Form>
-          </>
-        ) : (
-          <>
-            <Header>
-              <div>
-                <Title>{item.title}</Title>
-                <p style={{ margin: '0.5rem 0 0 0', color: 'rgba(255, 255, 255, 0.8)' }}>
-                  {item.artist}
-                </p>
-              </div>
-              <ButtonGroup>
-                <Button onClick={handlePrint}>
-                  <FiPrinter /> Imprimir
-                </Button>
-                <Button onClick={handleShare}>
-                  <FiShare2 /> Compartilhar
-                </Button>
-                <Button onClick={handleEdit}>
-                  <FiEdit2 /> Editar
-                </Button>
-                <Button danger onClick={handleDelete}>
-                  <FiTrash2 /> Excluir
-                </Button>
-              </ButtonGroup>
-            </Header>
-
-            <ViewControls>
-              <ControlGroup>
-                {item.lyrics && item.chords && (
-                  <ToggleContainer onClick={toggleView}>
-                    <ToggleOption active={!showChords}>Letra</ToggleOption>
-                    <ToggleOption active={showChords}>Cifra</ToggleOption>
-                  </ToggleContainer>
-                )}
-
-                <ViewButton
-                  active={showColumns}
-                  onClick={toggleColumns}
-                  title={showColumns ? "Uma coluna" : "Duas colunas"}
-                >
-                  {showColumns ? <FiGrid /> : <FiColumns />}
-                  {showColumns ? "Uma coluna" : "Duas colunas"}
-                </ViewButton>
-              </ControlGroup>
-
-              {showChords && item.key && (
-                <ControlGroup>
+        {showChords ? (
+          <MusicContent visible={true}>
+            <ChordInfo>
+              {item.key && (
+                <InfoItem>
                   <Label>Tom:</Label>
-                  <KeySelect value={currentKey} onChange={handleKeyChange}>
-                    {availableKeys.map(({ note, display }) => (
-                      <option key={note} value={note}>
-                        {display}
+                  <KeySelect
+                    value={currentKey}
+                    onChange={(e) => handleKeyChange(e)}
+                  >
+                    {availableKeys.map((key) => (
+                      <option key={key.note} value={key.note}>
+                        {key.note} {key.semitones !== 0 && `(${key.semitones > 0 ? '+' : ''}${key.semitones})`}
                       </option>
                     ))}
                   </KeySelect>
@@ -822,76 +748,43 @@ const MusicDetails = () => {
                       <FiArrowUp />
                     </TransposeButton>
                   </ButtonGroup>
-                </ControlGroup>
+                </InfoItem>
               )}
-            </ViewControls>
-
-            <MusicContent visible={!showChords}>
-              {item.lyrics && (
-                <TextArea columns={showColumns}>
-                  {item.lyrics}
-                </TextArea>
+              
+              {item.rhythm && (
+                <InfoItem>
+                  <Label>Ritmo:</Label>
+                  <span>{item.rhythm}</span>
+                </InfoItem>
               )}
-            </MusicContent>
-
-            <MusicContent visible={showChords}>
-              {item.chords && (
-                <>
-                  <MusicInfo>
-                    {item.key && (
-                      <InfoItem>
-                        Tom original: <span>{item.key}</span>
-                      </InfoItem>
-                    )}
-                    {currentKey && availableKeys.find(k => k.note === currentKey)?.semitones !== 0 && (
-                      <InfoItem>
-                        Tom atual: <span>{currentKey} ({availableKeys.find(k => k.note === currentKey)?.semitones > 0 ? '+' : ''}{availableKeys.find(k => k.note === currentKey)?.semitones})</span>
-                      </InfoItem>
-                    )}
-                    {item.rhythm && (
-                      <InfoItem>
-                        Ritmo: <span>{item.rhythm}</span>
-                      </InfoItem>
-                    )}
-                    {item.tempo && (
-                      <InfoItem>
-                        BPM: <span>{item.tempo}</span>
-                      </InfoItem>
-                    )}
-                  </MusicInfo>
-
-                  <TextArea isCifra columns={showColumns}>
-                    {transposedChords}
-                  </TextArea>
-
-                  {item.observations && (
-                    <>
-                      <Label>Observações</Label>
-                      <TextArea columns={showColumns}>
-                        {item.observations}
-                      </TextArea>
-                    </>
-                  )}
-                </>
+              
+              {item.tempo && (
+                <InfoItem>
+                  <Label>BPM:</Label>
+                  <span>{item.tempo}</span>
+                </InfoItem>
               )}
-            </MusicContent>
-          </>
-        )}
+            </ChordInfo>
 
-        {showShareModal && (
-          <Modal onClick={() => setShowShareModal(false)}>
-            <ModalContent onClick={e => e.stopPropagation()}>
-              <ModalHeader>
-                <ModalTitle>Compartilhar</ModalTitle>
-                <CloseButton onClick={() => setShowShareModal(false)}>
-                  <FiX />
-                </CloseButton>
-              </ModalHeader>
-              <ShareButton onClick={() => copyToClipboard(formatShareText())}>
-                Copiar texto
-              </ShareButton>
-            </ModalContent>
-          </Modal>
+            <TextDisplay columns={showColumns}>
+              {transposedChords}
+            </TextDisplay>
+
+            {item.observations && (
+              <>
+                <Label>Observações</Label>
+                <TextDisplay>
+                  {item.observations}
+                </TextDisplay>
+              </>
+            )}
+          </MusicContent>
+        ) : (
+          <MusicContent visible={true}>
+            <TextDisplay columns={showColumns}>
+              {item.lyrics}
+            </TextDisplay>
+          </MusicContent>
         )}
       </Content>
     </Container>

@@ -6,76 +6,96 @@ import styled from 'styled-components';
 import { FiPlus, FiSearch, FiX, FiEdit2, FiTrash2, FiMoreVertical } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import ReactLoading from 'react-loading';
+import { Link } from 'react-router-dom';
 
 const Container = styled.div`
   min-height: 100vh;
-  padding: 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-`;
-
-const Content = styled.div`
-  max-width: 800px;
-  margin: 0 auto;
+  background: linear-gradient(135deg, #6e8efb, #a777e3);
   position: relative;
+  overflow-x: hidden;
 `;
 
-const ListHeader = styled.div`
+const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
-  position: relative;
+  padding: 20px 40px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 `;
 
-const TotalMusic = styled.span`
+const Content = styled.div`
+  padding: 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+`;
+
+const PageTitle = styled.h1`
   color: white;
-  font-size: 1.1rem;
-`;
-
-const SearchContainer = styled.div`
-  position: relative;
-  margin-bottom: 2rem;
+  font-size: 2rem;
+  margin: 0 0 32px 0;
+  font-weight: 500;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 `;
 
 const SearchInput = styled.input`
   width: 100%;
-  padding: 12px;
-  padding-right: 40px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   background: rgba(255, 255, 255, 0.1);
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
   color: white;
   font-size: 1rem;
-
-  &:focus {
-    outline: none;
-    border-color: #1db954;
-  }
+  margin-bottom: 24px;
+  backdrop-filter: blur(10px);
 
   &::placeholder {
     color: rgba(255, 255, 255, 0.6);
   }
-`;
 
-const SearchIcon = styled(FiSearch)`
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: rgba(255, 255, 255, 0.6);
-`;
-
-const ClearButton = styled(FiX)`
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: rgba(255, 255, 255, 0.6);
-  cursor: pointer;
-  
-  &:hover {
-    color: white;
+  &:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.4);
   }
+`;
+
+const MusicGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+  margin-top: 24px;
+`;
+
+const MusicCard = styled.div`
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+
+  &:hover {
+    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+`;
+
+const MusicTitle = styled.h3`
+  color: white;
+  margin: 0 0 8px 0;
+  font-size: 1.2rem;
+  font-weight: 500;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+`;
+
+const MusicInfo = styled.p`
+  color: rgba(255, 255, 255, 0.9);
+  margin: 4px 0;
+  font-size: 0.9rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 `;
 
 const AddButton = styled.button`
@@ -99,103 +119,29 @@ const AddButton = styled.button`
   }
 `;
 
-const MusicListContainer = styled.div`
-  position: relative;
-`;
-
-const MusicItem = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 6px;
-  margin-bottom: 0.5rem;
+const ClearButton = styled(FiX)`
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(255, 255, 255, 0.6);
   cursor: pointer;
-  position: relative;
   
-  &:hover {
-    background: rgba(255, 255, 255, 0.1);
-  }
-`;
-
-const MusicInfo = styled.div`
-  flex: 1;
-  margin-right: 1rem;
-`;
-
-const MusicTitle = styled.h3`
-  margin: 0;
-  margin-bottom: 0.5rem;
-  color: white;
-  font-size: 1.1rem;
-`;
-
-const MusicArtist = styled.p`
-  margin: 0;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 0.9rem;
-`;
-
-const MusicActions = styled.div`
-  position: relative;
-  z-index: 1000;
-`;
-
-const OptionsButton = styled.button`
-  background: none;
-  border: none;
-  color: rgba(255, 255, 255, 0.8);
-  padding: 8px;
-  cursor: pointer;
-  position: relative;
-  z-index: 1000;
-
   &:hover {
     color: white;
   }
-
-  &:focus {
-    outline: none;
-  }
 `;
 
-const OptionsMenu = styled.div`
-  position: absolute;
-  top: 100%;
-  right: 0;
-  background: #282828;
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  min-width: 150px;
-  z-index: 1001;
+const LogoLink = styled(Link)`
+  display: block;
+  text-decoration: none;
+  margin-right: 2rem;
 `;
 
-const MenuItem = styled.button`
-  width: 100%;
-  padding: 8px 16px;
-  background: none;
-  border: none;
-  color: white;
-  text-align: left;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.1);
-  }
-
-  svg {
-    font-size: 1.1rem;
-  }
-`;
-
-const NoResults = styled.div`
-  text-align: center;
-  padding: 2rem;
-  color: rgba(255, 255, 255, 0.8);
+const LogoImage = styled.img`
+  width: 320px;
+  height: 120px;
+  object-fit: contain;
 `;
 
 const MusicList = () => {
@@ -305,59 +251,41 @@ const MusicList = () => {
 
   return (
     <Container>
+      <Header>
+        <LogoLink to="/">
+          <LogoImage src={process.env.PUBLIC_URL + '/Planner_Music.png'} alt="Planner Music" />
+        </LogoLink>
+        <PageTitle>Músicas</PageTitle>
+        <AddButton onClick={handleAddNew}>
+          <FiPlus /> Nova Música
+        </AddButton>
+      </Header>
       <Content>
-        <ListHeader>
-          <TotalMusic>Total de músicas: {filteredMusic.length}</TotalMusic>
-          <AddButton onClick={handleAddNew}>
-            <FiPlus /> Nova Música
-          </AddButton>
-        </ListHeader>
-
-        <SearchContainer>
-          <SearchInput
-            type="text"
-            placeholder="Buscar música..."
-            value={searchTerm}
-            onChange={handleSearch}
-          />
-          {searchTerm && (
-            <ClearButton onClick={clearSearch}>
-              <FiX />
-            </ClearButton>
-          )}
-        </SearchContainer>
-
-        <MusicListContainer>
+        <SearchInput
+          type="text"
+          placeholder="Buscar música..."
+          value={searchTerm}
+          onChange={handleSearch}
+        />
+        {searchTerm && (
+          <ClearButton onClick={clearSearch}>
+            <FiX />
+          </ClearButton>
+        )}
+        <MusicGrid>
           {filteredMusic.length > 0 ? (
             filteredMusic.map(item => (
-              <MusicItem key={item.id} onClick={() => handleItemClick(item)}>
-                <MusicInfo>
-                  <MusicTitle>{item.title}</MusicTitle>
-                  <MusicArtist>{item.artist}</MusicArtist>
-                </MusicInfo>
-                <MusicActions>
-                  <OptionsButton onClick={(e) => toggleMenu(e, item.id)}>
-                    <FiMoreVertical />
-                  </OptionsButton>
-                  {openMenuId === item.id && (
-                    <OptionsMenu>
-                      <MenuItem onClick={(e) => handleEdit(e, item)}>
-                        <FiEdit2 /> Editar
-                      </MenuItem>
-                      <MenuItem onClick={(e) => handleDelete(e, item)}>
-                        <FiTrash2 /> Excluir
-                      </MenuItem>
-                    </OptionsMenu>
-                  )}
-                </MusicActions>
-              </MusicItem>
+              <MusicCard key={item.id} onClick={() => handleItemClick(item)}>
+                <MusicTitle>{item.title}</MusicTitle>
+                <MusicInfo>{item.artist}</MusicInfo>
+              </MusicCard>
             ))
           ) : (
-            <NoResults>
+            <div>
               {searchTerm ? 'Nenhuma música encontrada' : 'Nenhuma música cadastrada'}
-            </NoResults>
+            </div>
           )}
-        </MusicListContainer>
+        </MusicGrid>
       </Content>
     </Container>
   );
