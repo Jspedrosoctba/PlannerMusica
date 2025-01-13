@@ -1,11 +1,13 @@
-# Music App
+# Music App - Planner Musical
 
 Uma aplicação web para gerenciamento de músicas e partituras, construída com React e Firebase.
 
 ## 🚀 Funcionalidades
 
 - Autenticação de usuários (login/cadastro)
-- Gerenciamento de músicas
+- Gerenciamento de músicas (adicionar, editar, excluir)
+- Visualização e impressão de partituras
+- Sistema de notificações
 - Interface moderna e responsiva
 - Validação de formulários
 - Feedback visual para ações do usuário
@@ -19,6 +21,7 @@ Uma aplicação web para gerenciamento de músicas e partituras, construída com
 - React Router Dom
 - React Loading
 - React Toastify
+- React Icons
 - PropTypes
 - ESLint e Prettier para qualidade de código
 
@@ -32,7 +35,7 @@ Uma aplicação web para gerenciamento de músicas e partituras, construída com
 
 1. Clone o repositório:
 ```bash
-git clone [url-do-repositório]
+git clone https://github.com/Jspedrosoctba/PlannerMusica.git
 cd music-app
 ```
 
@@ -55,39 +58,28 @@ REACT_APP_FIREBASE_MESSAGING_SENDER_ID=seu_messaging_sender_id
 REACT_APP_FIREBASE_APP_ID=seu_app_id
 ```
 
-## 🚀 Scripts Disponíveis
+4. Inicie o servidor de desenvolvimento:
+```bash
+npm start
+# ou
+yarn start
+```
 
-### `npm start`
+## 📦 Estrutura do Projeto
 
-Inicia o app em modo de desenvolvimento.\
-Abra [http://localhost:3000](http://localhost:3000) para ver no navegador.
-
-### `npm run build`
-
-Compila o app para produção na pasta `build`.\
-O app estará otimizado e pronto para deploy!
-
-### `npm run lint`
-
-Executa o ESLint para verificar problemas no código.
-
-### `npm run format`
-
-Formata o código usando Prettier.
-
-## 📝 Boas Práticas
-
-- Utilize os componentes de erro (ErrorBoundary) para tratamento de erros
-- Mantenha o código formatado usando `npm run format`
-- Verifique erros de lint usando `npm run lint`
-- Sempre adicione PropTypes aos componentes
-- Utilize os componentes de loading para feedback visual
-- Trate todos os erros possíveis nas chamadas ao Firebase
+```
+src/
+  ├── components/     # Componentes React
+  ├── contexts/       # Contextos React (Auth, Notificações)
+  ├── utils/          # Funções utilitárias
+  ├── firebaseConfig.js  # Configuração do Firebase
+  └── App.js         # Componente principal
+```
 
 ## 🤝 Contribuindo
 
-1. Faça o fork do projeto
-2. Crie sua branch de feature (`git checkout -b feature/AmazingFeature`)
+1. Faça um fork do projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
 3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
 4. Push para a branch (`git push origin feature/AmazingFeature`)
 5. Abra um Pull Request
@@ -95,9 +87,3 @@ Formata o código usando Prettier.
 ## 📄 Licença
 
 Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalhes.
-
-## 🎉 Agradecimentos
-
-- [Create React App](https://github.com/facebook/create-react-app)
-- [Firebase](https://firebase.google.com/)
-- [Styled Components](https://styled-components.com/)
